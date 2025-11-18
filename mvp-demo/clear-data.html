@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Nulstil Data</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      transition: all 0.2s;
+    }
+    .btn-clear {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-clear:hover {
+      background: #dc2626;
+      transform: scale(1.05);
+    }
+    .btn-back {
+      background: white;
+      color: #667eea;
+    }
+    .btn-back:hover {
+      background: #f3f4f6;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗑️ Nulstil Test Data</h1>
+    <p>Klik nedenfor for at slette gammel data og genindlæse ny test-data med både København og Aarhus skilte.</p>
+    <br>
+    <button class="btn-clear" onclick="clearData()">Nulstil Data</button>
+    <button class="btn-back" onclick="goBack()">Tilbage til App</button>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    function clearData() {
+      localStorage.removeItem('vejskilt_applications');
+      document.getElementById('status').innerHTML = '<strong>✅ Data nulstillet!</strong><br>Går til hovedsiden...';
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 1500);
+    }
+
+    function goBack() {
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

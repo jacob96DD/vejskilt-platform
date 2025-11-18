@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.dataforsyningen.dk)",
+      "WebFetch(domain:dawadocs.dataforsyningen.dk)",
+      "WebFetch(domain:github.com)",
+      "Bash(start \"\" \"C:\\projekter\\VejSkilt\\gis-demo.html\")",
+      "Bash(start \"\" \"C:\\projekter\\VejSkilt\\gis-demo-simple.html\")",
+      "Bash(start \"\" \"C:\\projekter\\VejSkilt\\mvp-demo\\index.html\")",
+      "Bash(start \"\" \"C:\\projekter\\VejSkilt\\mvp-demo\\oversigt-kort.html\")",
+      "Bash(python -m http.server:*)",
+      "Bash(start http://localhost:8080)",
+      "Bash(start http://localhost:3000)",
+      "Bash(start http://localhost:3000/clear-data.html)",
+      "WebFetch(domain:api.dataforsyningen.dk)",
+      "Bash(start http://localhost:3000/api-demo.html)",
+      "WebFetch(domain:skilteplanen.dk)",
+      "Bash(git init:*)",
+      "Bash(dir:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

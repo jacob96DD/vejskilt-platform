@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VejSkilt Platform - GIS Demo</title>
+
+  <!-- OKAPI CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/@dataforsyningen/okapi@3.0.0/dist/okapi.min.css" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .info-panel {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .info-panel h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .feature-item::before {
+      content: "✓";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background: #10b981;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 20px;
+      margin-right: 10px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .map-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .map-container h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    #mapContainer {
+      width: 100%;
+      height: 600px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #e5e7eb;
+    }
+
+    .legend {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .legend h3 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .legend-items {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .legend-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 10px;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .status-pending { background: #fbbf24; }
+    .status-approved { background: #3b82f6; }
+    .status-mounted { background: #10b981; }
+    .status-removed { background: #6b7280; }
+
+    .instructions {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+
+    .instructions h4 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #92400e;
+    }
+
+    .instructions p {
+      font-size: 13px;
+      color: #78350f;
+      line-height: 1.6;
+    }
+
+    .instructions code {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+
+    @media (max-width: 768px) {
+      #mapContainer {
+        height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <h1>🗺️ VejSkilt Platform - GIS Demo</h1>
+      <p>Demonstration af Dataforsyningens kort-integration med test-data</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Info Panel -->
+    <div class="info-panel">
+      <h2>📋 Om denne demo</h2>
+      <p>Denne side demonstrerer hvordan VejSkilt Platform vil bruge <strong>Dataforsyningen</strong> (Danmarks officielle kortdata) til at vise vejskilte på et interaktivt kort.</p>
+
+      <div class="feature-list">
+        <div class="feature-item">100% gratis danske kort</div>
+        <div class="feature-item">Interaktiv zoom og pan</div>
+        <div class="feature-item">Flere baggrundskort</div>
+        <div class="feature-item">Custom markers for skilte</div>
+        <div class="feature-item">Click på marker for info</div>
+        <div class="feature-item">Real-time updates muligt</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <h3>🏷️ Skilt Status-farver</h3>
+      <div class="legend-items">
+        <div class="legend-item">
+          <div class="legend-color status-pending"></div>
+          <span><strong>Afventer godkendelse</strong> - Gul</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color status-approved"></div>
+          <span><strong>Godkendt</strong> - Blå</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color status-mounted"></div>
+          <span><strong>Monteret</strong> - Grøn</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color status-removed"></div>
+          <span><strong>Fjernet</strong> - Grå</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-container">
+      <h2>🗺️ Interaktivt Kort</h2>
+      <p style="margin-bottom: 15px; color: #6b7280; font-size: 14px;">
+        Kortet nedenfor viser test-data med forskellige vejskilte i København-området.
+        <strong>Klik på markerne</strong> for at se information.
+      </p>
+
+      <div id="mapContainer">
+        <!-- Test markers (will be read by OKAPI) -->
+        <span class="geomarker"
+          data-type="mounted"
+          data-title="Hastighedsbegrænsning 40 km/t"
+          data-description="Status: Monteret<br>Adresse: Vesterbrogade 10, København<br>Monteret: 2025-01-10"
+          data-lat="55.6738"
+          data-lon="12.5647">
+        </span>
+
+        <span class="geomarker"
+          data-type="mounted"
+          data-title="Vejarbejde"
+          data-description="Status: Monteret<br>Adresse: Nørrebrogade 52, København<br>Monteret: 2025-01-12"
+          data-lat="55.6845"
+          data-lon="12.5553">
+        </span>
+
+        <span class="geomarker"
+          data-type="approved"
+          data-title="Fodgængerovergang"
+          data-description="Status: Godkendt<br>Adresse: Amagerbrogade 150, København<br>Godkendt: 2025-01-13"
+          data-lat="55.6574"
+          data-lon="12.5978">
+        </span>
+
+        <span class="geomarker"
+          data-type="mounted"
+          data-title="Stop - Vigepligt"
+          data-description="Status: Monteret<br>Adresse: Frederiksberg Allé 88, Frederiksberg<br>Monteret: 2025-01-11"
+          data-lat="55.6767"
+          data-lon="12.5344">
+        </span>
+
+        <span class="geomarker"
+          data-type="pending"
+          data-title="Hastighedsbegrænsning 30 km/t"
+          data-description="Status: Afventer godkendelse<br>Adresse: Østerbrogade 45, København<br>Ansøgt: 2025-01-14"
+          data-lat="55.7008"
+          data-lon="12.5789">
+        </span>
+
+        <span class="geomarker"
+          data-type="mounted"
+          data-title="Omkørsel"
+          data-description="Status: Monteret<br>Adresse: H.C. Andersens Boulevard 38, København<br>Monteret: 2025-01-09"
+          data-lat="55.6751"
+          data-lon="12.5701">
+        </span>
+
+        <span class="geomarker"
+          data-type="removed"
+          data-title="Vejarbejde (afsluttet)"
+          data-description="Status: Fjernet<br>Adresse: Gammel Kongevej 1, Frederiksberg<br>Fjernet: 2025-01-08"
+          data-lat="55.6722"
+          data-lon="12.5478">
+        </span>
+
+        <span class="geomarker"
+          data-type="approved"
+          data-title="Parkering forbudt"
+          data-description="Status: Godkendt<br>Adresse: Store Kongensgade 40, København<br>Godkendt: 2025-01-14"
+          data-lat="55.6855"
+          data-lon="12.5867">
+        </span>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="info-panel">
+      <h2>🚀 Næste Skridt</h2>
+      <div class="instructions" style="background: #d1fae5; border-left: 4px solid #10b981;">
+        <h4 style="color: #065f46;">✅ Token Aktiveret!</h4>
+        <p style="color: #065f46;">
+          Denne demo kører nu med <strong>din rigtige Dataforsyningen token</strong>, hvilket betyder fuld adgang til alle features!
+          <br><br>
+          <strong>Aktiverede features:</strong>
+          <br>
+          ✓ Alle baggrundskort (topografisk, luftfoto, osv.)
+          <br>
+          ✓ Højeste zoom-levels
+          <br>
+          ✓ "Find min lokation" knap aktiveret
+          <br>
+          ✓ Bedre performance
+          <br>
+          ✓ Ingen usage limits
+          <br><br>
+          <strong>Prøv at:</strong> Klik på "Layer Switcher" ikonet (oppe til højre) for at skifte mellem kort-typer!
+        </p>
+      </div>
+
+      <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 6px;">
+        <h4 style="font-size: 14px; margin-bottom: 10px; color: #065f46;">✅ Bekræftet Features</h4>
+        <ul style="font-size: 13px; color: #065f46; line-height: 1.8; padding-left: 20px;">
+          <li>Danske officielle kort - <strong>100% gratis</strong></li>
+          <li>Ubegrænsede API kald med token</li>
+          <li>Multiple baggrundskort (topografisk, luftfoto, etc.)</li>
+          <li>GPS-præcision til 5-10 meter</li>
+          <li>Real-time opdateringer muligt via Supabase</li>
+          <li>Works on desktop, tablet, og mobile</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Technical Info -->
+    <div class="info-panel">
+      <h2>💻 Teknisk Information</h2>
+      <p style="margin-bottom: 15px; font-size: 14px; color: #6b7280;">
+        Dette kort bruger <strong>OKAPI</strong> (Offentlig Kort API) fra Dataforsyningen, som er Danmarks officielle kilde til geografiske data.
+      </p>
+
+      <div style="background: #f9fafb; padding: 15px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 12px; overflow-x: auto;">
+        <div style="color: #6b7280; margin-bottom: 5px;">// Sådan initialiseres kortet i den rigtige app:</div>
+        <div style="color: #1f2937;">
+          <span style="color: #7c3aed;">import</span> { Initialize } <span style="color: #7c3aed;">from</span> <span style="color: #059669;">'@dataforsyningen/okapi'</span>;<br>
+          <br>
+          <span style="color: #7c3aed;">const</span> map = <span style="color: #7c3aed;">new</span> <span style="color: #dc2626;">Initialize</span>({<br>
+          &nbsp;&nbsp;target: mapContainer,<br>
+          &nbsp;&nbsp;token: <span style="color: #059669;">'YOUR_TOKEN_HERE'</span>,<br>
+          &nbsp;&nbsp;zoom: <span style="color: #059669;">'auto'</span>,<br>
+          &nbsp;&nbsp;center: <span style="color: #059669;">'auto'</span>,<br>
+          &nbsp;&nbsp;background: <span style="color: #059669;">'dtk_skaermkort'</span>,<br>
+          &nbsp;&nbsp;zoomSlider: <span style="color: #7c3aed;">true</span>,<br>
+          &nbsp;&nbsp;layerSwitcher: <span style="color: #7c3aed;">true</span>,<br>
+          &nbsp;&nbsp;myLocation: <span style="color: #7c3aed;">true</span><br>
+          });
+        </div>
+      </div>
+
+      <p style="margin-top: 15px; font-size: 13px; color: #6b7280;">
+        <strong>Ressourcer:</strong><br>
+        📚 Dokumentation: <a href="https://github.com/SDFIdk/okapi" target="_blank">github.com/SDFIdk/okapi</a><br>
+        🎨 Demos: <a href="https://sdfidk.github.io/okapi/" target="_blank">sdfidk.github.io/okapi</a><br>
+        🔑 Opret token: <a href="https://dataforsyningen.dk" target="_blank">dataforsyningen.dk</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- OKAPI JS -->
+  <script type="module">
+    import { Initialize } from 'https://cdn.jsdelivr.net/npm/@dataforsyningen/okapi@3.0.0'
+
+    // Initialize map WITH token (full features enabled!)
+    try {
+      const map = new Initialize({
+        target: document.getElementById('mapContainer'),
+        token: 'f39755a4ac7c0723e2bafe2fffcf1617', // Dataforsyningen token
+        zoom: 13,
+        center: [55.6761, 12.5683], // København centrum
+        background: 'dtk_skaermkort', // Standard topografisk kort
+        zoomSlider: true,
+        layerSwitcher: true,
+        myLocation: true, // Enabled - show user location
+        showPopup: true,
+        markerIcon: {
+          'pending': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI2ZiYmYyNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+',
+          'approved': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzNiODJmNiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+',
+          'mounted': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzEwYjk4MSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+',
+          'removed': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzZiNzI4MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+'
+        }
+      })
+
+      console.log('✅ OKAPI map initialized successfully!')
+      console.log('📍 Showing', document.querySelectorAll('.geomarker').length, 'test markers')
+
+      // Add click handler for features
+      map.addOnFeatureClickFunction((feature) => {
+        console.log('Clicked marker:', feature.get('title'))
+      })
+
+    } catch (error) {
+      console.error('❌ Error initializing map:', error)
+      document.getElementById('mapContainer').innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #fee2e2; color: #991b1b; padding: 20px; text-align: center;">
+          <div>
+            <h3 style="margin-bottom: 10px;">⚠️ Kort kunne ikke loades</h3>
+            <p style="font-size: 14px;">Dette kan skyldes manglende token eller netværksproblemer.</p>
+            <p style="font-size: 13px; margin-top: 10px;">Error: ${error.message}</p>
+          </div>
+        </div>
+      `
+    }
+  </script>
+</body>
+</html>

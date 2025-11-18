@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VejSkilt - Overblikskort (Dataforsyningen)</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .controls {
+      background: white;
+      padding: 15px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .btn-all {
+      background: #6b7280;
+      color: white;
+    }
+
+    .btn-pending {
+      background: #fbbf24;
+      color: #1f2937;
+    }
+
+    .btn-approved {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-mounted {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn.active {
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+    }
+
+    .stats {
+      display: flex;
+      gap: 15px;
+      margin-left: auto;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stat-number {
+      font-weight: bold;
+      font-size: 18px;
+      color: #1f2937;
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 140px);
+    }
+
+    .legend {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+      min-width: 200px;
+    }
+
+    .legend h4 {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #1f2937;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .legend-marker {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .marker-pending { background: #fbbf24; }
+    .marker-approved { background: #3b82f6; }
+    .marker-mounted { background: #10b981; }
+    .marker-removed { background: #ef4444; }
+
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 15px;
+      margin: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #1e40af;
+    }
+
+    /* Custom marker tooltip */
+    .custom-popup {
+      font-size: 13px;
+    }
+
+    .custom-popup strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #1f2937;
+    }
+
+    .custom-popup .meta {
+      color: #6b7280;
+      margin: 3px 0;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 5px;
+    }
+
+    .status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-approved {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .status-mounted {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-removed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🗺️ VejSkilt Overblikskort</h1>
+    <p>Danmarks officielle kort fra Dataforsyningen</p>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-all active" onclick="filterMap('all')" id="btn-all">
+      Alle Skilte
+    </button>
+    <button class="btn btn-pending" onclick="filterMap('pending')" id="btn-pending">
+      🟡 Afventer
+    </button>
+    <button class="btn btn-approved" onclick="filterMap('approved')" id="btn-approved">
+      🔵 Godkendt
+    </button>
+    <button class="btn btn-mounted" onclick="filterMap('mounted')" id="btn-mounted">
+      🟢 Monteret
+    </button>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-number" id="total-count">0</span>
+        <span>Total</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number" id="pending-count">0</span>
+        <span>Afventer</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number" id="approved-count">0</span>
+        <span>Godkendt</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number" id="mounted-count">0</span>
+        <span>Monteret</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>📍 Bruger Dataforsyningen's officielle danske kort</strong><br>
+    • Kort-baggrund: Danmarks Adressers Web API (DAWA)<br>
+    • Skilte-data: Hentes fra din Supabase database<br>
+    • Klik på markører for at se detaljer om hvert skilt
+  </div>
+
+  <div id="map"></div>
+
+  <div class="legend">
+    <h4>📊 Skilt Status</h4>
+    <div class="legend-item">
+      <div class="legend-marker marker-pending"></div>
+      <span>Afventer Godkendelse</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-marker marker-approved"></div>
+      <span>Godkendt</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-marker marker-mounted"></div>
+      <span>Monteret</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-marker marker-removed"></div>
+      <span>Fjernet</span>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Dataforsyningen token
+    const DATAFORSYNINGEN_TOKEN = 'f39755a4ac7c0723e2bafe2fffcf1617';
+
+    // Initialize map
+    let map;
+    let markers = [];
+    let currentFilter = 'all';
+
+    // Initialize map centered on Copenhagen
+    function initMap() {
+      map = L.map('map').setView([55.6761, 12.5683], 13);
+
+      // Add Dataforsyningen tile layer (Danmarks officielle kort)
+      L.tileLayer('https://api.dataforsyningen.dk/topo_skaermkort_daempet/{z}/{x}/{y}.png?token=' + DATAFORSYNINGEN_TOKEN, {
+        attribution: '&copy; <a href="https://dataforsyningen.dk/">Dataforsyningen</a>',
+        maxZoom: 20,
+        minZoom: 7
+      }).addTo(map);
+
+      console.log('✅ Kort initialiseret med Dataforsyningen tiles!');
+
+      // Load signs from LocalStorage (simulating database)
+      loadSigns();
+    }
+
+    // Get all signs from all applications
+    function getAllSigns() {
+      const applications = JSON.parse(localStorage.getItem('vejskilt_applications') || '[]');
+      const allSigns = [];
+
+      applications.forEach(app => {
+        if (app.signs && Array.isArray(app.signs)) {
+          app.signs.forEach(sign => {
+            allSigns.push({
+              ...sign,
+              applicationId: app.id,
+              applicationNumber: app.number,
+              applicationTitle: app.title,
+              applicationStatus: app.status
+            });
+          });
+        }
+      });
+
+      return allSigns;
+    }
+
+    // Get marker color based on status
+    function getMarkerColor(status) {
+      switch(status) {
+        case 'pending': return '#fbbf24';
+        case 'approved': return '#3b82f6';
+        case 'mounted': return '#10b981';
+        case 'removed': return '#ef4444';
+        default: return '#6b7280';
+      }
+    }
+
+    // Get status label in Danish
+    function getStatusLabel(status) {
+      switch(status) {
+        case 'pending': return 'Afventer Godkendelse';
+        case 'approved': return 'Godkendt';
+        case 'mounted': return 'Monteret';
+        case 'removed': return 'Fjernet';
+        default: return status;
+      }
+    }
+
+    // Load and display signs on map
+    function loadSigns() {
+      // Clear existing markers
+      markers.forEach(marker => map.removeLayer(marker));
+      markers = [];
+
+      const signs = getAllSigns();
+
+      // Update statistics
+      updateStats(signs);
+
+      // Filter signs based on current filter
+      const filteredSigns = currentFilter === 'all'
+        ? signs
+        : signs.filter(s => {
+            if (currentFilter === 'pending') return s.applicationStatus === 'pending';
+            if (currentFilter === 'approved') return s.applicationStatus === 'approved' && s.status !== 'mounted';
+            if (currentFilter === 'mounted') return s.status === 'mounted';
+            return true;
+          });
+
+      console.log(`📍 Viser ${filteredSigns.length} af ${signs.length} skilte`);
+
+      // Add markers to map
+      filteredSigns.forEach(sign => {
+        const status = sign.status === 'mounted' ? 'mounted' : sign.applicationStatus;
+        const color = getMarkerColor(status);
+
+        // Create custom marker icon
+        const icon = L.divIcon({
+          className: 'custom-marker',
+          html: `<div style="
+            background: ${color};
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          "></div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        const marker = L.marker([sign.lat, sign.lon], { icon })
+          .bindPopup(`
+            <div class="custom-popup">
+              <strong>${sign.type}</strong>
+              <div class="meta">📍 ${sign.lat.toFixed(6)}, ${sign.lon.toFixed(6)}</div>
+              <div class="meta">🏗️ ${sign.applicationTitle}</div>
+              <div class="meta">📋 ${sign.applicationNumber}</div>
+              ${sign.qrCode ? `<div class="meta">🔖 ${sign.qrCode}</div>` : ''}
+              <span class="status-badge status-${status}">${getStatusLabel(status)}</span>
+            </div>
+          `)
+          .addTo(map);
+
+        markers.push(marker);
+      });
+    }
+
+    // Update statistics counters
+    function updateStats(signs) {
+      const total = signs.length;
+      const pending = signs.filter(s => s.applicationStatus === 'pending').length;
+      const approved = signs.filter(s => s.applicationStatus === 'approved' && s.status !== 'mounted').length;
+      const mounted = signs.filter(s => s.status === 'mounted').length;
+
+      document.getElementById('total-count').textContent = total;
+      document.getElementById('pending-count').textContent = pending;
+      document.getElementById('approved-count').textContent = approved;
+      document.getElementById('mounted-count').textContent = mounted;
+    }
+
+    // Filter map by status
+    function filterMap(filter) {
+      currentFilter = filter;
+
+      // Update button states
+      document.querySelectorAll('.controls .btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById('btn-' + filter).classList.add('active');
+
+      // Reload signs with filter
+      loadSigns();
+    }
+
+    // Initialize on page load
+    initMap();
+
+    // Auto-refresh every 10 seconds (to show new signs added in other tabs)
+    setInterval(() => {
+      loadSigns();
+    }, 10000);
+
+    console.log('🗺️ Overblikskort klar!');
+    console.log('📡 Bruger Dataforsyningen token:', DATAFORSYNINGEN_TOKEN);
+  </script>
+</body>
+</html>
